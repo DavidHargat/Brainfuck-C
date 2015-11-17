@@ -28,12 +28,19 @@ Likewise `p` is the address of the instruction pointer, not to be confused with 
 The instruction set is as follows:
 
 `>` - Move `m` forward 1.
+
 `<` - Move `m` backward 1.
+
 `+` - Increment the byte `*m`.
+
 `-` - Decrement the byte `*m`.
+
 `.` - Output (print, generally) the byte `*m`.
+
 `,` - Input a byte and set `*m` to it.
+
 `[` - If `*m` is zero, jump `p` to the instruction after the matching `]`.
+
 `]` - If `*m` is nonzero, jump `p` to the instruction after the matching `[`.
 
 Any characters other than the above eight are ignored.
