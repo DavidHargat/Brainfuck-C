@@ -47,18 +47,22 @@ char *find_matching_bracket(char *p, char bracket) {
 }
 
 void run(char *program) {
-	char *p = program;
-	
-	// Allocate cells
+	char *p;
 	char mem[MEMORY_SIZE];
 	char *m;
-	m = mem;
+	char c;
 
-	// Initialize cells as zero.
+	// set cells to zero
 	bzero(mem, sizeof(mem));
 
-	// The current instruction
-	char c = *(p++);
+	// instruction pointer
+	p = program;
+
+	// memory pointer
+	m = mem;
+
+	// current instruction
+	c = *p;
 
 	// Reads to end of string.	
 	while( c != '\0' ) {
@@ -102,7 +106,8 @@ void run(char *program) {
 		default:
 			break;
 		}
-		// Move forward an instruction
+
+		// move instruction pointer forward
 		c = *(++p);
 	}
 }
