@@ -2,130 +2,158 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * @author David Hargat
- * @email DavidHargat@yahoo.com
- * @liscence
- */
+// TODO: make bracket jumps constant time
 
-void run(char *program){
+// How many memory 'cells' are allocated
+#define MEMORY_SIZE (30000)
+
+struct bf_state {
+	char memory[MEMORY_SIZE];
+	char *m;
+	char *p;
+	char  c;
+};
+
+typedef struct bf_state bf_state;
+
+char *find_matching_bracket(char *p, char bracket) {
+	int skip;
+	char c;
+	char matching;
+	skip = 0;
+	matching = (bracket == '[') ? ']' : '[';
+	while(1) {
+		if( bracket == '[' )
+		{
+			c = *(++p);
+		}
+		else
+		{
+			c = *(--p);
+		}
+		if( c == bracket )
+		{
+			skip++;
+		}
+		else if( c == matching )
+		{
+			if( skip == 0 ){
+				return p;
+			}else{
+				skip--;
+			}
+		}
+	}
+}
+
+void run(char *program) {
 	char *p = program;
-
-	// How many memory 'cells' are allocated
-	int size = 30000; 	
 	
-	// Allocate
-	char *m = malloc(size);
+	// Allocate cells
+	char mem[MEMORY_SIZE];
+	char *m;
+	m = mem;
+
 	// Initialize cells as zero.
-	bzero(m,size);
+	bzero(mem, sizeof(mem));
 
 	// The current instruction
 	char c = *(p++);
 
 	// Reads to end of string.	
-	while( c!='\0' ){
-		// Basic memory pointer instructions:
-		if( c == '>' ) m++; // Forward
-		if( c == '<' ) m--; // Backward
-		if( c == '+' ) (*m)++; // Increment
-		if( c == '-' ) (*m)--; // Decrement
+	while( c != '\0' ) {
+		switch(c) {
+		case '>':
+			m++;
+			break;
 
-		// Output char:
-		if( c == '.' ) fputc((*m), stdout);
-		
-		// Input char:
-		// Subsituted EOF for 0 since EOF isn't a valid char. 		
-		if( c == ',' ){
-			char t = fgetc(stdin);
-			if( t!=EOF )
-				(*m)=t;
-			else
-				(*m)=0;
-		}
+		case '<':
+			m--;
+			break;
 
-		// Jump Forward If Zero:
-		if( c == '[' ){
-			if( (*m)==0 ){
-				int skip = 0;
-				while( (*p)!=']' || skip>0 ){
-					p++;
-					if( (*p)=='[' ) skip++;
-					if( (*p)==']' ){
-						if(skip==0){
-							p++;
-							break;
-						}else{
-							skip--;
-						}
-					}
-				}
+		case '+':
+			(*m)++;
+			break;
+
+		case '-':
+			(*m)--;
+			break;
+
+		case '.':
+			fputc(*m, stdout);
+			break;
+
+		case ',':
+			(*m) = getc(stdin);
+			break;
+
+		case '[':
+			if( (*m) == 0 ) {
+				p = find_matching_bracket(p, '[');
 			}
-		}
+			break;
 
-		// Jump Back If Zero:
-		if( c == ']' ){
-			if( (*m) != 0 ){
-				int skip = 0;
-				while( (*p)!='[' || skip>0 ){
-					p--;
-					if( (*p)==']' ) skip++;
-					if( (*p)=='[' ){
-						if(skip==0){
-							p++;
-							break;
-						}else{
-							skip--;
-						}
-					}
-				}
+		case ']':
+			if( (*m) != 0 ) {
+				p = find_matching_bracket(p, ']');
 			}
-		}
+			break;
 
+		default:
+			break;
+		}
 		// Move forward an instruction
-		c = *(p++);
+		c = *(++p);
 	}
 }
 
-char *readfile(char *filename){
-	char * buffer = 0;
+char *readfile(char *filename) {
+	char *buffer;
 	long length;
-	FILE * f = fopen (filename, "r");
-	if(f==NULL) return NULL;
+	FILE *f;
+	int result;
 
-	int result = 0;
-
-	if( f )
-	{
-		result = fseek(f, 0, SEEK_END);
-		if(result==-1) return NULL;
-
-		length = ftell(f);
-		if(length==-1) return NULL;
-
-		result = fseek(f, 0, SEEK_SET);
-		if(result==-1) return NULL;
-		
-		buffer = malloc(length);
-		if (buffer)
-		{
-			fread (buffer, 1, length, f);
-		}
-		fclose (f);
+	if( ( f = fopen(filename, "r") ) == NULL ) {
+		return NULL;
 	}
 
-	if(buffer)
-		return buffer;
-	else
+	if( fseek(f, 0, SEEK_END) == -1 ) {
+		fclose(f);
 		return NULL;
+	}
+
+	if( ( length = ftell(f) ) == -1 ) { 
+		fclose(f);
+		return NULL;
+	}
+
+	if( ( result = fseek(f, 0, SEEK_SET) ) == -1 ) {
+		fclose(f);
+		return NULL;
+	}
+
+	if( ( buffer = malloc(length+1) ) == NULL ) {
+		fclose(f);
+		return NULL;
+	}
+
+	fread(buffer, 1, length, f);
+
+	fclose(f);
+
+	buffer[length] = '\0'; // NULL terminator.
+
+	return buffer;
 }
 
-int main(char argc, char **argv){
+int main(char argc, char **argv) {
 
 	char *program = readfile(argv[1]);
-	if( program != NULL ){
+	if( program != NULL ) {
 		run(program);
 	}else{
-		printf("%s\n","Usage: bf <filename>");
+		printf("Usage: bf <filename>\n");
+		perror("ERROR");
 	}
 
 	return 0;
