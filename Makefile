@@ -1,5 +1,13 @@
-default: bf
-.PHONY: default
+TARGET = bf
+SRC    = main.c
+FLAGS  = -I. -Wall
 
-bf: main.c
-	gcc main.c -o bf
+default: bf
+
+$(TARGET): $(SRC)
+	gcc $(FLAGS) $^ -o $@
+
+clean:
+	$(RM) $(TARGET)
+
+.PHONY: default clean
